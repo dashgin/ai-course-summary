@@ -15,4 +15,4 @@ class Course(SQLModel, table=True):
     course_description: str = Field(sa_column=Column(TEXT))
     ai_summary: str | None = Field(sa_column=Column(TEXT))
     status: str = Field(default="pending", max_length=50)
-    created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
+    created_at: datetime = Column(sa_type=DateTime(timezone=True), server_default=func.now())
