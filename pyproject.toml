@@ -1,0 +1,9 @@
+[project]
+name = "AI_Summary"
+version = "0.1.0"
+description = "AI-Powered Online Course Summary Generator"
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+]
