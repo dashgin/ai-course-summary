@@ -26,6 +26,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    develop:
+      watch:
+      - action: sync
+        path: ./app
+        target: /app/app
+        ignore:
+          - .venv/
+      - action: rebuild
+        path: pyproject.toml
+
     image: ai_summary
     container_name: ai_summary
     ports:
@@ -34,9 +44,6 @@ services:
       - .env
     depends_on:
       - postgres
-    volumes:
-      - ./app:/app/app # to reload changes
-
 
 volumes:
   postgres_data:
