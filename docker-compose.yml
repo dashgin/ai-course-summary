@@ -46,5 +46,17 @@ services:
       - postgres
       - redis
 
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai_summary
+    command: python -m celery -A app.celery_app worker --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - app
+
 volumes:
   postgres_data:

@@ -3,11 +3,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.dependencies import (
-    CurrentUser, 
-    SessionDep, 
-    OpenAILLMServiceDep, 
-    RedisDep, 
-    check_rate_limit
+    CurrentUser,
+    SessionDep,
+    OpenAILLMServiceDep,
+    RedisDep,
+    check_rate_limit,
 )
 from app.models import CourseCreate, Course, CoursesPublic, CourseSummaryEdit
 from app.crud import courses as courses_crud
@@ -140,10 +140,10 @@ def edit_summary(
         )
     else:
         updated_course = courses_crud.update_course_with_summary(
-            session=session, 
-            course_id=course_id, 
+            session=session,
+            course_id=course_id,
             ai_summary=summary_edit.ai_summary,
-            finalize=False
+            finalize=False,
         )
 
     if not updated_course:

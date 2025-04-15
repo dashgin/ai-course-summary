@@ -63,7 +63,7 @@ def finalize_course_summary(
 
     if ai_summary is not None:
         course.ai_summary = ai_summary
-    
+
     course.status = "completed"
     session.add(course)
     session.commit()

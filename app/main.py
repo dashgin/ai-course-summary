@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth, users, courses
+from app.routers import auth, users, courses, batch
 
 
 app = FastAPI(
@@ -11,3 +11,4 @@ app = FastAPI(
 app.include_router(auth.router)
 app.include_router(courses.router)
 app.include_router(users.router)
+app.include_router(batch.router)
