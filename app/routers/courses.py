@@ -9,7 +9,7 @@ from app.dependencies import (
     RedisDep, 
     check_rate_limit
 )
-from app.models import CourseCreate, Course, CoursesPublic
+from app.models import CourseCreate, Course, CoursesPublic, CourseSummaryEdit
 from app.crud import courses as courses_crud
 
 router = APIRouter(prefix="/courses", tags=["courses"])
@@ -54,7 +54,7 @@ def generate_summary(
     2. Fetches the course description from the database
     3. Calls OpenAI's GPT API to generate a short summary
     4. Stores the AI-generated summary in the database
-    5. Updates the status to "completed"
+    5. Updates the status to "draft" for user to review
     6. Returns the summarized course description
     """
     # Check rate limiting (max 3 summaries per hour per user)
@@ -84,15 +84,72 @@ def generate_summary(
     # Generate the summary using OpenAI
     summary = llm_service.generate_course_summary(course.description)
 
-    # Update the course with the summary
+    # Update the course with the summary, but don't finalize yet
     updated_course = courses_crud.update_course_with_summary(
-        session=session, course_id=course_id, ai_summary=summary
+        session=session, course_id=course_id, ai_summary=summary, finalize=False
     )
 
     if not updated_course:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update course with summary",
+        )
+
+    return updated_course
+
+
+@router.put("/edit_summary/{course_id}", response_model=Course)
+def edit_summary(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    course_id: int,
+    summary_edit: CourseSummaryEdit,
+) -> Course:
+    """
+    Edit and optionally finalize a course summary.
+
+    This endpoint:
+    1. Updates the AI-generated summary with user edits
+    2. Optionally finalizes the summary, changing status to "completed"
+    3. Returns the updated course
+    """
+    course = courses_crud.get_course_by_id(session=session, course_id=course_id)
+
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Course with ID {course_id} not found",
+        )
+
+    if course.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions to access this course",
+        )
+
+    if course.status != "draft":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only draft summaries can be edited",
+        )
+
+    if summary_edit.finalize:
+        updated_course = courses_crud.finalize_course_summary(
+            session=session, course_id=course_id, ai_summary=summary_edit.ai_summary
+        )
+    else:
+        updated_course = courses_crud.update_course_with_summary(
+            session=session, 
+            course_id=course_id, 
+            ai_summary=summary_edit.ai_summary,
+            finalize=False
+        )
+
+    if not updated_course:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update course summary",
         )
 
     return updated_course

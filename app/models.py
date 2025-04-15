@@ -52,3 +52,8 @@ class CourseCreate(SQLModel):
 
 class CoursesPublic(SQLModel):
     courses: list[Course]
+
+
+class CourseSummaryEdit(SQLModel):
+    ai_summary: str
+    finalize: bool = False

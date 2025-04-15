@@ -17,15 +17,16 @@ def get_course_by_id(*, session: Session, course_id: int) -> Course | None:
 
 
 def update_course_with_summary(
-    *, session: Session, course_id: int, ai_summary: str
+    *, session: Session, course_id: int, ai_summary: str, finalize: bool = False
 ) -> Course | None:
     """
-    Update a course with an AI-generated summary and set status to completed.
+    Update a course with an AI-generated summary.
 
     Args:
         session: Database session
         course_id: ID of the course to update
         ai_summary: The AI-generated summary
+        finalize: If True, set status to completed; otherwise, set to draft
 
     Returns:
         The updated course or None if not found
@@ -35,6 +36,34 @@ def update_course_with_summary(
         return None
 
     course.ai_summary = ai_summary
+    course.status = "completed" if finalize else "draft"
+    session.add(course)
+    session.commit()
+    session.refresh(course)
+    return course
+
+
+def finalize_course_summary(
+    *, session: Session, course_id: int, ai_summary: str = None
+) -> Course | None:
+    """
+    Finalize a course summary, optionally updating the AI summary.
+
+    Args:
+        session: Database session
+        course_id: ID of the course to update
+        ai_summary: Optional updated AI summary
+
+    Returns:
+        The updated course or None if not found
+    """
+    course = get_course_by_id(session=session, course_id=course_id)
+    if not course:
+        return None
+
+    if ai_summary is not None:
+        course.ai_summary = ai_summary
+    
     course.status = "completed"
     session.add(course)
     session.commit()
