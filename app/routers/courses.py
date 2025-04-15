@@ -2,7 +2,13 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
-from app.dependencies import CurrentUser, SessionDep, OpenAILLMServiceDep
+from app.dependencies import (
+    CurrentUser, 
+    SessionDep, 
+    OpenAILLMServiceDep, 
+    RedisDep, 
+    check_rate_limit
+)
 from app.models import CourseCreate, Course, CoursesPublic
 from app.crud import courses as courses_crud
 
@@ -38,17 +44,26 @@ def generate_summary(
     current_user: CurrentUser,
     course_id: int,
     llm_service: OpenAILLMServiceDep,
+    redis_client: RedisDep,
 ) -> Course:
     """
     Generate an AI summary for a course.
 
     This endpoint:
-    1. Fetches the course description from the database
-    2. Calls OpenAI's GPT API to generate a short summary
-    3. Stores the AI-generated summary in the database
-    4. Updates the status to "completed"
-    5. Returns the summarized course description
+    1. Checks if the user has exceeded their rate limit (max 3 summaries per hour)
+    2. Fetches the course description from the database
+    3. Calls OpenAI's GPT API to generate a short summary
+    4. Stores the AI-generated summary in the database
+    5. Updates the status to "completed"
+    6. Returns the summarized course description
     """
+    # Check rate limiting (max 3 summaries per hour per user)
+    if not check_rate_limit(current_user.id, redis_client):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Maximum 3 AI summaries per hour.",
+        )
+
     # Get the course from the database
     course = courses_crud.get_course_by_id(session=session, course_id=course_id)
 
