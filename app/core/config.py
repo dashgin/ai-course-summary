@@ -38,5 +38,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int = 6379
 
+    # OpenAI API key
+    OPENAI_API_KEY: str = ""
+
 
 settings = Settings()  # type: ignore

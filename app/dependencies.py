@@ -12,6 +12,19 @@ from app.core import security
 from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
+from app.protocols import LLMService
+from app.services.llm import OpenAILLMService
+
+
+def get_openai_service() -> LLMService:
+    """Dependency for getting the LLM service"""
+    if not settings.OPENAI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="OpenAI API key not configured",
+        )
+    return OpenAILLMService(api_key=settings.OPENAI_API_KEY)
+
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/login/access-token")
 
@@ -23,6 +36,7 @@ def get_db() -> Generator[Session, None, None]:
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
+OpenAILLMServiceDep = Annotated[OpenAILLMService, Depends(get_openai_service)]
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:

@@ -1,7 +1,7 @@
 from app.core.security import verify_password
 from app.models import User
 from .users import get_user_by_email
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 
 def authenticate(*, session: Session, email: str, password: str) -> User | None:

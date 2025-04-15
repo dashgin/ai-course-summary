@@ -1,4 +1,3 @@
-
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash
@@ -19,6 +18,7 @@ def get_user_by_id(*, session: Session, user_id: int) -> User | None:
     statement = select(User).where(User.id == user_id)
     user = session.exec(statement).first()
     return user
+
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)

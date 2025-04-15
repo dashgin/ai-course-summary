@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.dependencies import SessionDep
 from app.core import security
 from app.core.config import settings
-from app.models import Token
+from app.models import Token, UserCreate, UserPublic, User
 from app import crud
 
 router = APIRouter(tags=["login"])
@@ -34,3 +34,18 @@ def login_access_token(
             user.id, expires_delta=access_token_expires
         )
     )
+
+
+@router.post("/signup", response_model=UserPublic)
+def signup(*, session: SessionDep, user_in: UserCreate) -> User:
+    """
+    Create new user without the need to be logged in.
+    """
+    user = crud.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system.",
+        )
+    user = crud.create_user(session=session, user_create=user_in)
+    return user
