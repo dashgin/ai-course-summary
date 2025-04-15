@@ -11,10 +11,10 @@ class OpenAILLMService:
         """Generate a summary using OpenAI's API"""
         from openai import OpenAI
 
-        client = OpenAI(api_key=self.api_key, base_url="https://api.groq.com/openai/v1")
+        client = OpenAI(api_key=self.api_key)
 
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="gpt-4o-mini-2024-07-18",
             messages=[
                 {
                     "role": "system",
